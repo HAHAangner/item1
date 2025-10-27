@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遥控器键盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        .remote-control {
+            background: #2c3e50;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 480px;
+        }
+
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            padding: 12px 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            line-height: 1.3;
+            color: #333;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-blue {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-orange {
+            background: linear-gradient(145deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-gray {
+            background: linear-gradient(145deg, #bdc3c7, #95a5a6);
+            color: #2c3e50;
+        }
+
+        .btn-darkgray {
+            background: linear-gradient(145deg, #7f8c8d, #6c7a7b);
+            color: white;
+        }
+
+        .btn small {
+            font-size: 10px;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .col-2 {
+            grid-column: span 2;
+        }
+
+        /* 圆形方向盘 */
+        .dpad-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+        }
+
+        .dpad-circle {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border: 12px solid #3498db;
+            border-radius: 50%;
+            background: #34495e;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .dpad-center {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #95a5a6, #7f8c8d);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+        }
+
+        .dpad-btn {
+            position: absolute;
+            width: 45px;
+            height: 35px;
+            background: linear-gradient(145deg, #bdc3c7, #95a5a6);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #2c3e50;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+        }
+
+        .dpad-btn:active {
+            transform: scale(0.95);
+        }
+
+        .dpad-up {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .dpad-down {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .dpad-left {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 8px 0 0 8px;
+        }
+
+        .dpad-right {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .row-with-dpad {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 140px 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .dpad-wrapper {
+            grid-column: 4;
+            grid-row: 1 / 4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .left-buttons {
+            display: contents;
+        }
+
+        .right-buttons {
+            display: contents;
+        }
+
+        .f-btn {
+            padding: 8px;
+            font-size: 11px;
+            min-height: 40px;
+        }
+
+        /* 数字键盘区域 */
+        .numpad-section {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .numpad-with-dpad {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 140px 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .label-text {
+            font-size: 11px;
+            margin-top: 2px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="remote-control">
+        <!-- 第一行 -->
+        <div class="keyboard-grid">
+            <button class="btn btn-blue">消音</button>
+            <button class="btn btn-orange">复位</button>
+            <button class="btn btn-gray">自检</button>
+            <button class="btn btn-gray">呼叫</button>
+            <button class="btn btn-gray">📞</button>
+            <button class="btn btn-darkgray">免提跟听</button>
+        </div>
+
+        <!-- 数字键盘区域与方向盘 -->
+        <div class="numpad-with-dpad">
+            <!-- 第二行左侧 -->
+            <button class="btn btn-gray">1</button>
+            <button class="btn btn-gray">
+                2<br><small>ABC</small>
+            </button>
+            <button class="btn btn-gray">
+                3<br><small>DEF</small>
+            </button>
+            
+            <!-- 方向盘占据多行 -->
+            <div class="dpad-wrapper">
+                <div class="dpad-container">
+                    <div class="dpad-circle"></div>
+                    <button class="dpad-btn dpad-up">▲</button>
+                    <button class="dpad-btn dpad-down">▼</button>
+                    <button class="dpad-btn dpad-left">◀</button>
+                    <button class="dpad-btn dpad-right">▶</button>
+                    <div class="dpad-center">绿黄</div>
+                </div>
+            </div>
+
+            <!-- 第二行右侧 -->
+            <button class="btn btn-gray f-btn">F1<br><small>上翻</small></button>
+            <button class="btn btn-gray f-btn">F2<br><small>下翻</small></button>
+
+            <!-- 第三行 -->
+            <button class="btn btn-gray">
+                4<br><small>GHI</small>
+            </button>
+            <button class="btn btn-gray">
+                5<br><small>JKL</small>
+            </button>
+            <button class="btn btn-gray">
+                6<br><small>MNO</small>
+            </button>
+            <!-- 方向盘继续占据 -->
+            <button class="btn btn-gray">某某</button>
+            <button class="btn btn-gray">🔺</button>
+
+            <!-- 第四行 -->
+            <button class="btn btn-gray">
+                7<br><small>PQRS</small>
+            </button>
+            <button class="btn btn-gray">
+                8<br><small>TUV</small>
+            </button>
+            <button class="btn btn-gray">
+                9<br><small>WXYZ</small>
+            </button>
+            <!-- 方向盘继续占据 -->
+            <button class="btn btn-gray">🔻</button>
+            <button class="btn btn-gray">重拨</button>
+        </div>
+
+        <!-- 第五行 -->
+        <div class="keyboard-grid">
+            <button class="btn btn-gray">确认</button>
+            <button class="btn btn-gray">0</button>
+            <button class="btn btn-gray">取消</button>
+            <button class="btn btn-gray">监控</button>
+            <button class="btn btn-gray">音量调节</button>
+            <button class="btn btn-gray">配置</button>
+        </div>
+
+        <!-- 第六行 -->
+        <div class="keyboard-grid">
+            <button class="btn btn-gray">录音</button>
+            <button class="btn btn-gray">收消声板</button>
+            <button class="btn btn-gray">U</button>
+            <button class="btn btn-gray">显光启停</button>
+            <button class="btn btn-gray">操作锁剂</button>
+            <button class="btn btn-gray">=</button>
+        </div>
+    </div>
+</body>
+</html>
