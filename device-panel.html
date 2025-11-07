@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能设备管理系统 - 层级面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #0d1117 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+            border-radius: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* 父级系统 */
+        .system-parent {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .system-parent:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .system-header {
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.05));
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .system-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+
+        .system-header:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+
+        .system-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            z-index: 1;
+        }
+
+        .system-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .system-title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .system-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .device-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 10px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .system-description {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .toggle-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .system-header:hover .toggle-icon {
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.1);
+        }
+
+        .toggle-icon::before {
+            content: '▼';
+            font-size: 14px;
+            color: #60a5fa;
+            transition: transform 0.3s ease;
+        }
+
+        .system-parent.expanded .toggle-icon::before {
+            transform: rotate(180deg);
+        }
+
+        /* 子级内容区域 */
+        .system-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 24px;
+        }
+
+        .system-parent.expanded .system-content {
+            max-height: 3000px;
+            padding: 20px 24px;
+        }
+
+        /* 子级设备组 */
+        .device-group {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(30, 41, 59, 0.6));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .device-group:hover {
+            border-color: rgba(100, 116, 139, 0.5);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .device-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .device-group-header {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(51, 65, 85, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .device-group-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, #10b981, #14b8a6);
+            transition: width 0.3s ease;
+        }
+
+        .device-group-header:hover::before {
+            width: 100%;
+            opacity: 0.08;
+        }
+
+        .device-group-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .device-group-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10b981, #14b8a6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .device-group-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .device-group-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .device-group-status {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .device-group .toggle-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .device-group .toggle-icon::before {
+            content: '▶';
+            font-size: 12px;
+            color: #34d399;
+        }
+
+        .device-group.expanded .toggle-icon::before {
+            transform: rotate(90deg);
+        }
+
+        /* 孙级设备列表 */
+        .device-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .device-group.expanded .device-list {
+            max-height: 2000px;
+        }
+
+        .device-item {
+            padding: 16px 20px;
+            background: rgba(30, 41, 59, 0.4);
+            border-top: 1px solid rgba(71, 85, 105, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .device-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent);
+            transition: width 0.3s ease;
+        }
+
+        .device-item:hover {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .device-item:hover::before {
+            width: 100%;
+        }
+
+        .device-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .device-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        .device-indicator.online {
+            background: #10b981;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+        }
+
+        .device-indicator.offline {
+            background: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.9);
+            }
+        }
+
+        .device-details {
+            flex: 1;
+        }
+
+        .device-name-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .device-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #f1f5f9;
+        }
+
+        .device-type-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 4px;
+            color: #60a5fa;
+        }
+
+        .device-id {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .device-status.online {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .device-status.offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 16px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            background: rgba(51, 65, 85, 0.5);
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .action-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-subtext {
+            font-size: 13px;
+            color: #475569;
+        }
+
+        /* 统计信息 */
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-card:nth-child(1) .stat-icon {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .stat-card:nth-child(2) .stat-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .stat-card:nth-child(3) .stat-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .stat-card:nth-child(4) .stat-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+            }
+
+            .stat-card {
+                min-width: 100%;
+            }
+
+            .device-actions {
+                flex-direction: column;
+            }
+
+            .device-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .device-status {
+                align-self: flex-end;
+            }
+        }
+
+        /* 加载动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .system-parent {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .system-parent:nth-child(1) { animation-delay: 0.1s; }
+        .system-parent:nth-child(2) { animation-delay: 0.2s; }
+        .system-parent:nth-child(3) { animation-delay: 0.3s; }
+        .system-parent:nth-child(4) { animation-delay: 0.4s; }
+        .system-parent:nth-child(5) { animation-delay: 0.5s; }
+        .system-parent:nth-child(6) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🏢 智能设备管理系统</h1>
+            <p>层级化设备监控面板 | 实时状态追踪</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <div class="stat-label">设备总数</div>
+                    <div class="stat-value">23</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <div class="stat-label">在线设备</div>
+                    <div class="stat-value">18</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-info">
+                    <div class="stat-label">离线设备</div>
+                    <div class="stat-value">5</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏗️</div>
+                <div class="stat-info">
+                    <div class="stat-label">系统分类</div>
+                    <div class="stat-value">6</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 电梯系统 -->
+        <div class="system-parent expanded">
+            <div class="system-header" onclick="toggleSystem(this)">
+                <div class="system-info">
+                    <div class="system-icon">🛗</div>
+                    <div class="system-title">
+                        <div class="system-name">
+                            电梯系统
+                            <span class="device-count">3</span>
+                        </div>
+                        <div class="system-description">智能电梯监控与管理</div>
+                    </div>
+                </div>
+                <div class="toggle-icon"></div>
+            </div>
+            <div class="system-content">
+                <!-- 一楼电梯组 -->
+                <div class="device-group expanded">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">🏢</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">一楼电梯组</div>
+                                <div class="device-group-status">3台电梯 | 全部在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">一楼北侧</div>
+                                        <div class="device-type-tag">客梯</div>
+                                    </div>
+                                    <div class="device-id">设备编号：TL-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">一楼东侧</div>
+                                        <div class="device-type-tag">客梯</div>
+                                    </div>
+                                    <div class="device-id">设备编号：SL-002</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">一楼西侧</div>
+                                        <div class="device-type-tag">客梯</div>
+                                    </div>
+                                    <div class="device-id">设备编号：SL-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 电子巡更 -->
+        <div class="system-parent">
+            <div class="system-header" onclick="toggleSystem(this)">
+                <div class="system-info">
+                    <div class="system-icon">🔍</div>
+                    <div class="system-title">
+                        <div class="system-name">
+                            电子巡更
+                            <span class="device-count">0</span>
+                        </div>
+                        <div class="system-description">智能巡检与监控系统</div>
+                    </div>
+                </div>
+                <div class="toggle-icon"></div>
+            </div>
+            <div class="system-content">
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-text">暂无设备</div>
+                    <div class="empty-subtext">该系统下还没有添加任何设备</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 环境监测 -->
+        <div class="system-parent">
+            <div class="system-header" onclick="toggleSystem(this)">
+                <div class="system-info">
+                    <div class="system-icon">🌡️</div>
+                    <div class="system-title">
+                        <div class="system-name">
+                            环境监测
+                            <span class="device-count">4</span>
+                        </div>
+                        <div class="system-description">温湿度、空气质量监测</div>
+                    </div>
+                </div>
+                <div class="toggle-icon"></div>
+            </div>
+            <div class="system-content">
+                <!-- 温度传感器组 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">🌡️</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">温度传感器</div>
+                                <div class="device-group-status">2台设备 | 1台离线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">一楼大厅温度计</div>
+                                        <div class="device-type-tag">温度</div>
+                                    </div>
+                                    <div class="device-id">设备编号：TEMP-101</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator offline"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">二楼办公区温度计</div>
+                                        <div class="device-type-tag">温度</div>
+                                    </div>
+                                    <div class="device-id">设备编号：TEMP-201</div>
+                                </div>
+                            </div>
+                            <div class="device-status offline">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 湿度传感器组 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">💧</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">湿度传感器</div>
+                                <div class="device-group-status">2台设备 | 全部在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">机房湿度计</div>
+                                        <div class="device-type-tag">湿度</div>
+                                    </div>
+                                    <div class="device-id">设备编号：HUM-301</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">仓库湿度计</div>
+                                        <div class="device-type-tag">湿度</div>
+                                    </div>
+                                    <div class="device-id">设备编号：HUM-401</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 机房动环 -->
+        <div class="system-parent">
+            <div class="system-header" onclick="toggleSystem(this)">
+                <div class="system-info">
+                    <div class="system-icon">🖥️</div>
+                    <div class="system-title">
+                        <div class="system-name">
+                            机房动环
+                            <span class="device-count">6</span>
+                        </div>
+                        <div class="system-description">机房动力与环境监控</div>
+                    </div>
+                </div>
+                <div class="toggle-icon"></div>
+            </div>
+            <div class="system-content">
+                <!-- UPS设备组 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">🔋</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">UPS不间断电源</div>
+                                <div class="device-group-status">2台设备 | 全部在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">主机房UPS-A</div>
+                                        <div class="device-type-tag">UPS</div>
+                                    </div>
+                                    <div class="device-id">设备编号：UPS-A-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="监控">📊</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">备用机房UPS-B</div>
+                                        <div class="device-type-tag">UPS</div>
+                                    </div>
+                                    <div class="device-id">设备编号：UPS-B-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="监控">📊</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 空调设备组 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">❄️</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">精密空调</div>
+                                <div class="device-group-status">4台设备 | 3台在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">A区精密空调-1</div>
+                                        <div class="device-type-tag">空调</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AC-A-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">A区精密空调-2</div>
+                                        <div class="device-type-tag">空调</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AC-A-002</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator offline"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">B区精密空调-1</div>
+                                        <div class="device-type-tag">空调</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AC-B-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status offline">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">B区精密空调-2</div>
+                                        <div class="device-type-tag">空调</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AC-B-002</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 楼宇自控 -->
+        <div class="system-parent">
+            <div class="system-header" onclick="toggleSystem(this)">
+                <div class="system-info">
+                    <div class="system-icon">🏗️</div>
+                    <div class="system-title">
+                        <div class="system-name">
+                            楼宇自控
+                            <span class="device-count">6</span>
+                        </div>
+                        <div class="system-description">楼宇自动化控制系统</div>
+                    </div>
+                </div>
+                <div class="toggle-icon"></div>
+            </div>
+            <div class="system-content">
+                <!-- 照明控制组 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">💡</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">智能照明</div>
+                                <div class="device-group-status">3台设备 | 全部在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">一楼照明控制器</div>
+                                        <div class="device-type-tag">照明</div>
+                                    </div>
+                                    <div class="device-id">设备编号：LIGHT-F1-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">二楼照明控制器</div>
+                                        <div class="device-type-tag">照明</div>
+                                    </div>
+                                    <div class="device-id">设备编号：LIGHT-F2-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">地下停车场照明</div>
+                                        <div class="device-type-tag">照明</div>
+                                    </div>
+                                    <div class="device-id">设备编号：LIGHT-B1-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新风系统组 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">🌬️</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">新风系统</div>
+                                <div class="device-group-status">3台设备 | 2台在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">一层新风机组</div>
+                                        <div class="device-type-tag">新风</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AHU-F1-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">二层新风机组</div>
+                                        <div class="device-type-tag">新风</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AHU-F2-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator offline"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">三层新风机组</div>
+                                        <div class="device-type-tag">新风</div>
+                                    </div>
+                                    <div class="device-id">设备编号：AHU-F3-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status offline">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 门禁系统 -->
+        <div class="system-parent">
+            <div class="system-header" onclick="toggleSystem(this)">
+                <div class="system-info">
+                    <div class="system-icon">🚪</div>
+                    <div class="system-title">
+                        <div class="system-name">
+                            门禁系统
+                            <span class="device-count">4</span>
+                        </div>
+                        <div class="system-description">智能门禁与访问控制</div>
+                    </div>
+                </div>
+                <div class="toggle-icon"></div>
+            </div>
+            <div class="system-content">
+                <!-- 主入口门禁 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">🔐</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">主入口门禁</div>
+                                <div class="device-group-status">2台设备 | 全部在线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">大厅正门门禁</div>
+                                        <div class="device-type-tag">门禁</div>
+                                    </div>
+                                    <div class="device-id">设备编号：DOOR-MAIN-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">侧门门禁</div>
+                                        <div class="device-type-tag">门禁</div>
+                                    </div>
+                                    <div class="device-id">设备编号：DOOR-SIDE-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 特殊区域门禁 -->
+                <div class="device-group">
+                    <div class="device-group-header" onclick="toggleDeviceGroup(this)">
+                        <div class="device-group-info">
+                            <div class="device-group-icon">🔒</div>
+                            <div class="device-group-title">
+                                <div class="device-group-name">重点区域门禁</div>
+                                <div class="device-group-status">2台设备 | 1台离线</div>
+                            </div>
+                        </div>
+                        <div class="toggle-icon"></div>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator online"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">机房门禁</div>
+                                        <div class="device-type-tag">高安全</div>
+                                    </div>
+                                    <div class="device-id">设备编号：DOOR-ROOM-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status online">
+                                <span>●</span> 在线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-main">
+                                <div class="device-indicator offline"></div>
+                                <div class="device-details">
+                                    <div class="device-name-row">
+                                        <div class="device-name">财务室门禁</div>
+                                        <div class="device-type-tag">高安全</div>
+                                    </div>
+                                    <div class="device-id">设备编号：DOOR-FIN-001</div>
+                                </div>
+                            </div>
+                            <div class="device-status offline">
+                                <span>●</span> 离线
+                            </div>
+                            <div class="device-actions">
+                                <button class="action-btn" title="详情">📋</button>
+                                <button class="action-btn" title="设置">⚙️</button>
+                                <button class="action-btn" title="控制">🎮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 切换父级系统
+        function toggleSystem(header) {
+            const parent = header.parentElement;
+            parent.classList.toggle('expanded');
+        }
+
+        // 切换子级设备组
+        function toggleDeviceGroup(header) {
+            const group = header.parentElement;
+            group.classList.toggle('expanded');
+            
+            // 阻止事件冒泡，避免触发父级的toggle
+            event.stopPropagation();
+        }
+
+        // 初始化：默认展开第一个系统
+        document.addEventListener('DOMContentLoaded', function() {
+            // 可以在这里添加其他初始化逻辑
+            console.log('智能设备管理系统已加载');
+        });
+    </script>
+</body>
+</html>
